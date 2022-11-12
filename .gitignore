@@ -26,6 +26,7 @@ server.crt
 server.key
 # Emyt config yaml
 app.yaml
+*.db
 
 # OSX
 .DS_Store

@@ -1,10 +1,10 @@
 package models
 
 import (
-    "net/url"
+	"net/url"
 )
 
-// ProxyTarget defines the upstream target.
+// RedirectUrl ProxyTarget defines the upstream target.
 type RedirectUrl struct {
-    URL  *url.URL
+	URL *url.URL
 }
