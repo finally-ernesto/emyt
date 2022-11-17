@@ -42,6 +42,6 @@ I don't know, someone can run tests! But, its easier to configure than stupid ng
 
 ![Discord Banner 3](https://discordapp.com/api/guilds/1042832870173052968/widget.png?style=banner3)
 
-Use link below
+Or use link below
 
 https://discord.gg/fB3FeFAvaU
