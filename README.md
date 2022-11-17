@@ -40,7 +40,7 @@ I don't know, someone can run tests! But, its easier to configure than stupid ng
 
 ## Got Problems?
 
-![Discord Banner 3](https://discordapp.com/api/guilds/[SERVER ID]/widget.png?style=banner3)
+![Discord Banner 3](https://discordapp.com/api/guilds/1042832870173052968/widget.png?style=banner3)
 
 Use link below
 
