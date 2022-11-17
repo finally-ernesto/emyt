@@ -3,17 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/emyt-io/emyt/config"
-	"github.com/emyt-io/emyt/models"
-	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/emyt-io/emyt/config"
+	"github.com/emyt-io/emyt/db"
+	"github.com/emyt-io/emyt/models"
+	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const AppYamlFilename = "app.yaml"
@@ -35,12 +38,22 @@ func main() {
 
 	// Load ENV
 	cfg := load()
-
+	// Init DB
+	db.Init()
 	// Hosts
 	for _, service := range cfg.Services {
 		// Service Target
 		tenant := echo.New()
 		var targets []*middleware.ProxyTarget
+		skip := !service.UseAuth
+
+		tenant.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
+			Skipper: func(ctx echo.Context) bool { return skip },
+			Validator: func(username, password string, ctx echo.Context) (bool, error) {
+				return handleLogIn(username, password)
+			},
+		}))
+
 		// Service Config
 		if service.Type == "proxy" {
 			// Web endpoint
@@ -157,4 +170,40 @@ func expiresServerHeader(next echo.HandlerFunc) echo.HandlerFunc {
 		c.Response().Header().Set("Cache-Control", "public, max-age=3600")
 		return next(c)
 	}
+}
+
+func handleLogIn(username, password string) (bool, error) {
+
+	user := models.User{
+		Username: username,
+		Password: password,
+	}
+	user.Prepare()
+	err := user.Validate("login")
+
+	if err != nil {
+		return false, err
+	}
+
+	return signIn(user.Username, user.Password)
+}
+
+func signIn(username, password string) (bool, error) {
+	var err error
+
+	u := models.User{}
+	db := db.DbManager()
+	err = db.Model(models.User{}).Where(&models.User{Username: username}).Take(&u).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	err = models.VerifyPassword(u.Password, password)
+
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		return false, err
+	}
+
+	return true, nil
 }
