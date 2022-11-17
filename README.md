@@ -37,3 +37,11 @@ Logs are located under `/var/log/emyt/emyt.log`
 ## Is it `Fast`?
 
 I don't know, someone can run tests! But, its easier to configure than stupid nginx and gets the job done.
+
+## Got Problems?
+
+![Discord Banner 3](https://discordapp.com/api/guilds/[SERVER ID]/widget.png?style=banner3)
+
+Use link below
+
+https://discord.gg/fB3FeFAvaU
