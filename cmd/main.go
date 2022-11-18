@@ -34,6 +34,24 @@ func load() config.Config {
 var hosts = map[string]*models.Host{}
 var redirectUrls = map[string]*models.RedirectUrl{}
 
+func customHTTPErrorHandler(err error, c echo.Context) {
+	code := http.StatusInternalServerError
+	if he, ok := err.(*echo.HTTPError); ok {
+		code = he.Code
+	}
+	c.Logger().Error(err)
+
+	if code == 401 {
+		c.Response().Header().Add("authorized", "false")
+		c.Response().Header().Add("next_page", c.Request().RequestURI)
+	}
+
+	errorPage := fmt.Sprintf("views/%d.html", code)
+	if err := c.File(errorPage); err != nil {
+		c.Logger().Error(err)
+	}
+}
+
 func main() {
 
 	// Load ENV
@@ -47,10 +65,16 @@ func main() {
 		var targets []*middleware.ProxyTarget
 		skip := !service.UseAuth
 
+		tenant.HTTPErrorHandler = customHTTPErrorHandler
 		tenant.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
 			Skipper: func(ctx echo.Context) bool { return skip },
 			Validator: func(username, password string, ctx echo.Context) (bool, error) {
-				return handleLogIn(username, password)
+
+				if username == "ernesto" || password == "123" {
+					return true, nil
+				}
+				return false, echo.ErrUnauthorized
+				// return handleLogIn(username, password)
 			},
 		}))
 
@@ -189,17 +213,29 @@ func handleLogIn(username, password string) (bool, error) {
 }
 
 func signIn(username, password string) (bool, error) {
-	var err error
+	// var err error
 
-	u := models.User{}
+	// u := models.User{}
 	db := db.DbManager()
-	err = db.Model(models.User{}).Where(&models.User{Username: username}).Take(&u).Error
 
-	if err != nil {
-		return false, err
+	// err = db.Where(&models.User{Username: username}).Take(&u).Error
+	var user = models.User{}
+	print("Something here")
+	// print(user)
+	print(db.Where)
+	print()
+	// db.Where(&models.User{Username: username}).First(&user)
+	if result := db.
+		Debug().
+		Where(&models.User{Username: username}).
+		First(&user); result.Error != nil {
+		return false, result.Error
 	}
 
-	err = models.VerifyPassword(u.Password, password)
+	print("Something there")
+
+	print("Pre verify")
+	var err = models.VerifyPassword(user.Password, password)
 
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		return false, err
