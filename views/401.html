@@ -191,6 +191,14 @@
       // Handler for .ready() called.
     });
 
+    function setCookie(cname, cvalue, exdays, path) {
+      const d = new Date();
+      path = path || '/'
+      d.setTime(d.getTime() + exdays * 24 * 60 * 60 * 1000);
+      let expires = "expires=" + d.toUTCString();
+      document.cookie = cname + "=" + cvalue + ";" + expires + ";path=" + path;
+    }
+
     function doLogin() {
       var username = $("#username").val();
       var password = $("#password").val();
@@ -203,14 +211,14 @@
         url: nextUrl,
         type: "GET",
         beforeSend: function (xhr) {
+          setCookie("Authorization", "Basic " + encoded, 1);
           xhr.setRequestHeader("Authorization", "Basic " + encoded);
         },
         success: function (response, statusCode, xhr) {
           forbidden = xhr.getResponseHeader("authorized") == "false";
           if (!forbidden) {
             setTimeout(function () {
-                window.location.replace(nextUrl);
-              //   document.write(response);
+              window.location.href = nextUrl;
             }, 333);
           }
         },
