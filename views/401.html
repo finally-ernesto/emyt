@@ -193,17 +193,17 @@
 
     function setCookie(cname, cvalue, exdays, path) {
       const d = new Date();
-      path = path || '/'
+      path = path || "/";
       d.setTime(d.getTime() + exdays * 24 * 60 * 60 * 1000);
       let expires = "expires=" + d.toUTCString();
       document.cookie = cname + "=" + cvalue + ";" + expires + ";path=" + path;
     }
 
     function doLogin() {
-      var username = $("#username").val();
-      var password = $("#password").val();
+      var username = $("#username");
+      var password = $("#password");
       // Encoded password
-      var encoded = btoa(username + ":" + password);
+      var encoded = btoa(username.val() + ":" + password.val());
       var urlParams = new URLSearchParams(window.location.search);
       var nextUrl = urlParams.get("next") || window.location.href;
 
@@ -211,15 +211,19 @@
         url: nextUrl,
         type: "GET",
         beforeSend: function (xhr) {
-          setCookie("Authorization", "Basic " + encoded, 1);
           xhr.setRequestHeader("Authorization", "Basic " + encoded);
         },
         success: function (response, statusCode, xhr) {
           forbidden = xhr.getResponseHeader("authorized") == "false";
           if (!forbidden) {
+            // If succeed store the credential as a cookie for an hour.
+            setCookie("Authorization", "Basic " + encoded, 0.04);
             setTimeout(function () {
               window.location.href = nextUrl;
             }, 333);
+          } else {
+            username.val("")
+            password.val("")
           }
         },
       });

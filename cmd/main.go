@@ -25,7 +25,6 @@ func load() config.Config {
 	var cfg config.Config
 	// read configuration from the file and environment variables
 	if err := cleanenv.ReadConfig(AppYamlFilename, &cfg); err != nil {
-		fmt.Println(err)
 		os.Exit(2)
 	}
 	return cfg
@@ -64,10 +63,13 @@ func main() {
 		tenant := echo.New()
 		var targets []*middleware.ProxyTarget
 		skip := !service.UseAuth
+		serviceName := service.Name
 
 		tenant.HTTPErrorHandler = customHTTPErrorHandler
+		tenant.Use(loadAuthorizationHeader)
 		tenant.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
 			Skipper: func(ctx echo.Context) bool { return skip },
+			Realm:   serviceName,
 			Validator: func(username, password string, ctx echo.Context) (bool, error) {
 
 				if username == "ernesto" || password == "123" {
@@ -185,6 +187,30 @@ func main() {
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
+	}
+}
+
+// If the Authorization is not sent as header but present as a cookie, loads it among the headers
+func loadAuthorizationHeader(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		auth := c.Request().Header.Get(echo.HeaderAuthorization)
+		if auth != "" {
+			// Skip if found.
+			return next(c)
+		}
+
+		cookie, err := c.Cookie(echo.HeaderAuthorization)
+		if err != nil {
+			// The soley prupose is copy the header; if we can't then skip.
+			return next(c)
+		}
+
+		if time.Now().Before(cookie.Expires) {
+			return next(c)
+		}
+		c.Request().Header.Set(echo.HeaderAuthorization, cookie.Value)
+
+		return next(c)
 	}
 }
 
