@@ -25,6 +25,7 @@ func load() config.Config {
 	var cfg config.Config
 	// read configuration from the file and environment variables
 	if err := cleanenv.ReadConfig(AppYamlFilename, &cfg); err != nil {
+		fmt.Println(err)
 		os.Exit(2)
 	}
 	return cfg
@@ -41,8 +42,8 @@ func customHTTPErrorHandler(err error, c echo.Context) {
 	c.Logger().Error(err)
 
 	if code == 401 {
-		c.Response().Header().Add("authorized", "false")
-		c.Response().Header().Add("next_page", c.Request().RequestURI)
+		c.Response().Header().Add("X-Authorized", "false")
+		c.Response().Header().Add("X-Next-Page", c.Request().RequestURI)
 	}
 
 	errorPage := fmt.Sprintf("views/%d.html", code)

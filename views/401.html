@@ -205,7 +205,7 @@
       // Encoded password
       var encoded = btoa(username.val() + ":" + password.val());
       var urlParams = new URLSearchParams(window.location.search);
-      var nextUrl = urlParams.get("next") || window.location.href;
+      var nextUrl = urlParams.get("X-Next-Page") || window.location.href;
 
       $.ajax({
         url: nextUrl,
@@ -213,8 +213,9 @@
         beforeSend: function (xhr) {
           xhr.setRequestHeader("Authorization", "Basic " + encoded);
         },
+        cache: false,
         success: function (response, statusCode, xhr) {
-          forbidden = xhr.getResponseHeader("authorized") == "false";
+          forbidden = xhr.getResponseHeader("X-Authorized") == "false";
           if (!forbidden) {
             // If succeed store the credential as a cookie for an hour.
             setCookie("Authorization", "Basic " + encoded, 0.04);
@@ -222,8 +223,8 @@
               window.location.href = nextUrl;
             }, 333);
           } else {
-            username.val("")
-            password.val("")
+            username.val("");
+            password.val("");
           }
         },
       });
