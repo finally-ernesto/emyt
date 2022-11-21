@@ -53,6 +53,16 @@ func customHTTPErrorHandler(err error, c echo.Context) {
 }
 
 func main() {
+	argZero := os.Args[0]
+	fmt.Println(argZero)
+
+	if argZero == "seed" {
+		fmt.Println("About to seed the database.")
+		models.JsonSeed()
+
+		fmt.Println("Database seeded. Exiting.")
+		os.Exit(0)
+	}
 
 	// Load ENV
 	cfg := load()
@@ -72,7 +82,8 @@ func main() {
 			Skipper: func(ctx echo.Context) bool { return skip },
 			Realm:   serviceName,
 			Validator: func(username, password string, ctx echo.Context) (bool, error) {
-
+				user := models.GetUserByUsername(username)
+				println(user.Password)
 				if username == "ernesto" || password == "123" {
 					return true, nil
 				}
