@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"flag"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -15,8 +17,8 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/natefinch/lumberjack.v2"
+	"gorm.io/gorm"
 )
 
 const AppYamlFilename = "app.yaml"
@@ -53,10 +55,10 @@ func customHTTPErrorHandler(err error, c echo.Context) {
 }
 
 func main() {
-	argZero := os.Args[0]
-	fmt.Println(argZero)
+	doSeed := flag.Bool("seed", false, "Seeds the database")
+	flag.Parse()
 
-	if argZero == "seed" {
+	if *doSeed {
 		fmt.Println("About to seed the database.")
 		models.JsonSeed()
 
@@ -82,13 +84,18 @@ func main() {
 			Skipper: func(ctx echo.Context) bool { return skip },
 			Realm:   serviceName,
 			Validator: func(username, password string, ctx echo.Context) (bool, error) {
-				user := models.GetUserByUsername(username)
-				println(user.Password)
-				if username == "ernesto" || password == "123" {
-					return true, nil
+				user, err := models.GetUserByUsername(username)
+				if err != nil {
+					errors.Is(err, gorm.ErrRecordNotFound)
+					return false, echo.ErrUnauthorized
 				}
-				return false, echo.ErrUnauthorized
-				// return handleLogIn(username, password)
+
+				err = models.VerifyPassword(user.Password, password)
+				if err != nil {
+					return false, echo.ErrUnauthorized
+				}
+
+				return true, nil
 			},
 		}))
 
@@ -232,52 +239,4 @@ func expiresServerHeader(next echo.HandlerFunc) echo.HandlerFunc {
 		c.Response().Header().Set("Cache-Control", "public, max-age=3600")
 		return next(c)
 	}
-}
-
-func handleLogIn(username, password string) (bool, error) {
-
-	user := models.User{
-		Username: username,
-		Password: password,
-	}
-	user.Prepare()
-	err := user.Validate("login")
-
-	if err != nil {
-		return false, err
-	}
-
-	return signIn(user.Username, user.Password)
-}
-
-func signIn(username, password string) (bool, error) {
-	// var err error
-
-	// u := models.User{}
-	db := db.DbManager()
-
-	// err = db.Where(&models.User{Username: username}).Take(&u).Error
-	var user = models.User{}
-	print("Something here")
-	// print(user)
-	print(db.Where)
-	print()
-	// db.Where(&models.User{Username: username}).First(&user)
-	if result := db.
-		Debug().
-		Where(&models.User{Username: username}).
-		First(&user); result.Error != nil {
-		return false, result.Error
-	}
-
-	print("Something there")
-
-	print("Pre verify")
-	var err = models.VerifyPassword(user.Password, password)
-
-	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		return false, err
-	}
-
-	return true, nil
 }

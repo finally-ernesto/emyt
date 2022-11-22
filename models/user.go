@@ -1,8 +1,6 @@
 package models
 
 import (
-	"errors"
-	"strings"
 	"time"
 
 	"encoding/json"
@@ -36,12 +34,20 @@ func JsonSeed() {
 
 	for idx := 0; idx < len(data.UserNodes); idx++ {
 		fmt.Println("User: ", data.UserNodes[idx].Username)
-
+		hasedPassword, err := Hash(data.UserNodes[idx].Password)
+		if err != nil {
+			println(err.Error())
+			panic("Failed to has password")
+		}
+		data.UserNodes[idx].Password = string(hasedPassword)
+		user := data.UserNodes[idx]
+		InserUser(&user)
 	}
+
 }
 
 func AllUsers() []User {
-	db, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("emyt.db"), &gorm.Config{})
 	if err != nil {
 		println(err.Error())
 		panic("failed to connect database")
@@ -53,21 +59,21 @@ func AllUsers() []User {
 	return users
 }
 
-func GetUserByUsername(username string) User {
-	db, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
+func GetUserByUsername(username string) (User, error) {
+	db, err := gorm.Open(sqlite.Open("emyt.db"), &gorm.Config{})
 	if err != nil {
 		println(err.Error())
 		panic("failed to connect database")
 	}
 
 	var user User
-	db.Where(User{Username: username}).First(&user)
+	err = db.Where(User{Username: username}).First(&user).Error
 
-	return user
+	return user, err
 }
 
 func InserUser(u *User) {
-	db, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("emyt.db"), &gorm.Config{})
 	if err != nil {
 		println(err.Error())
 		panic("failed to connect database")
@@ -81,7 +87,7 @@ func InserUser(u *User) {
 }
 
 func BulkInsertUser(u *[]User) {
-	db, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("emyt.db"), &gorm.Config{})
 	if err != nil {
 		println(err.Error())
 		panic("failed to connect database")
@@ -99,41 +105,6 @@ func Hash(password string) ([]byte, error) {
 
 func VerifyPassword(hashedPassword, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-}
-
-// func (u *User) BeforeSave(db *gorm.DB) error {
-// 	hasshedPassword, err := Hash(u.Password)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	u.Password = string(hasshedPassword)
-// 	return nil
-// }
-
-func (u *User) Prepare() {
-	u.ID = 0
-	u.CreatedAt = time.Now()
-	u.UpdatedAt = time.Now()
-}
-
-func (u *User) Validate(action string) error {
-	switch strings.ToLower(action) {
-	case "login":
-		if u.Password == "" {
-			return errors.New("required Password")
-		}
-		return nil
-	default:
-		// Create case
-		if u.Username == "" {
-			return errors.New("required Username")
-		}
-		if u.Password == "" {
-			return errors.New("required Password")
-		}
-		return nil
-	}
 }
 
 func (u *User) SaveUser(db *gorm.DB) (*User, error) {
@@ -168,13 +139,6 @@ func (u *User) FindUserByUsername(db *gorm.DB, username string) (*User, error) {
 }
 
 func (u *User) UpdateAUser(db *gorm.DB, username string) (*User, error) {
-
-	// To hash the password
-	// err := u.BeforeSave(db)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	db = db.Debug().Model(&User{}).Where(&User{Username: username}).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
 			"password":  u.Password,
