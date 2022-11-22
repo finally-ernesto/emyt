@@ -68,3 +68,11 @@ To seed users you must provide a `users.json` file with the following structure:
 ```
 
 Then run `$ go run cmd/main.go -seed`. Notice the `-seed` flag.
+
+## Got Problems?
+
+![Emyt Discord](https://discordapp.com/api/guilds/1042832870173052968/widget.png?style=banner3)
+
+Or use link below
+
+https://discord.gg/fB3FeFAvaU
