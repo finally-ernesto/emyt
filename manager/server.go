@@ -8,6 +8,7 @@ and encourage separation of core business logic and transport.
 
 import (
 	"fmt"
+	"github.com/emyt-io/emyt/db/models"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/labstack/echo"
@@ -15,28 +16,28 @@ import (
 	"strconv"
 )
 
-func (d DbOps) findAll(users *[]User) error {
+func (d models2.models) findAll(users *[]models2.User) error {
 	return d.db.Find(users).Error
 }
 
-func (d DbOps) create(user *User) error {
+func (d models2.models) create(user *models2.User) error {
 	return d.db.Create(user).Error
 }
 
-func (d DbOps) findByPage(users *[]User, page, view int) error {
+func (d models2.models) findByPage(users *[]models2.User, page, view int) error {
 	return d.db.Limit(view).Offset(view * (page - 1)).Find(&users).Error
 
 }
 
-func (d DbOps) updateByName(name, email string) error {
-	var user User
+func (d models.DbOps) updateByName(name, email string) error {
+	var user models.User
 	d.db.Where("name=?", name).Find(&user)
 	user.Email = email
 	return d.db.Save(&user).Error
 }
 
-func (d DbOps) deleteByName(name string) error {
-	var user User
+func (d models.DbOps) deleteByName(name string) error {
+	var user models.User
 	d.db.Where("name=?", name).Find(&user)
 	return d.db.Delete(&user).Error
 }
@@ -47,9 +48,9 @@ func handlerFunc(msg string) func(echo.Context) error {
 	}
 }
 
-func allUsers(dbobj DbOps) func(echo.Context) error {
+func allUsers(dbobj models.DbOps) func(echo.Context) error {
 	return func(c echo.Context) error {
-		var users []User
+		var users []models.User
 		dbobj.findAll(&users)
 		fmt.Println("{}", users)
 
@@ -57,16 +58,16 @@ func allUsers(dbobj DbOps) func(echo.Context) error {
 	}
 }
 
-func newUser(dbobj DbOps) func(echo.Context) error {
+func newUser(dbobj models.DbOps) func(echo.Context) error {
 	return func(c echo.Context) error {
 		name := c.Param("name")
 		email := c.Param("email")
-		dbobj.create(&User{Name: name, Email: email})
+		dbobj.create(&models.User{Name: name, Email: email})
 		return c.String(http.StatusOK, name+" user successfully created")
 	}
 }
 
-func deleteUser(dbobj DbOps) func(echo.Context) error {
+func deleteUser(dbobj models.DbOps) func(echo.Context) error {
 	return func(c echo.Context) error {
 		name := c.Param("name")
 
@@ -76,7 +77,7 @@ func deleteUser(dbobj DbOps) func(echo.Context) error {
 	}
 }
 
-func updateUser(dbobj DbOps) func(echo.Context) error {
+func updateUser(dbobj models.DbOps) func(echo.Context) error {
 	return func(c echo.Context) error {
 		name := c.Param("name")
 		email := c.Param("email")
@@ -85,11 +86,11 @@ func updateUser(dbobj DbOps) func(echo.Context) error {
 	}
 }
 
-func usersByPage(dbobj DbOps) func(echo.Context) error {
+func usersByPage(dbobj models.DbOps) func(echo.Context) error {
 	return func(c echo.Context) error {
 		limit, _ := strconv.Atoi(c.QueryParam("limit"))
 		page, _ := strconv.Atoi(c.QueryParam("page"))
-		var result []User
+		var result []models.User
 		dbobj.findByPage(&result, page, limit)
 		return c.JSON(http.StatusOK, result)
 	}
@@ -97,7 +98,7 @@ func usersByPage(dbobj DbOps) func(echo.Context) error {
 
 func handleRequest(dbgorm *gorm.DB) {
 	e := echo.New()
-	db := DbOps{dbgorm}
+	db := models.DbOps{dbgorm}
 
 	e.GET("/users", allUsers(db))
 	e.GET("/user", usersByPage(db))
@@ -110,7 +111,7 @@ func handleRequest(dbgorm *gorm.DB) {
 
 func initialMigration(db *gorm.DB) {
 
-	db.AutoMigrate(&User{})
+	db.AutoMigrate(&models.User{})
 }
 
 func Start() {
