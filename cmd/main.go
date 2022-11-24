@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/emyt-io/emyt/config"
 	"github.com/emyt-io/emyt/config/models"
+	"github.com/emyt-io/emyt/dbprovider"
 	manager "github.com/emyt-io/emyt/manager"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
@@ -36,6 +37,8 @@ func main() {
 
 	// Load ENV
 	cfg := load()
+	// Load dbprovider
+	dbprovider.Init()
 
 	// Hosts
 	for _, service := range cfg.Services {

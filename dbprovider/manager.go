@@ -6,10 +6,12 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-var Mgr Manager
+var UserManager UserManagerInterface
 
-type Manager interface {
+type UserManagerInterface interface {
 	AddUser(user *models.User) error
+	FindAll(users *[]models.User) error
+	bootstrap() error
 	// Add other methods
 }
 
@@ -17,17 +19,48 @@ type manager struct {
 	db *gorm.DB
 }
 
-func init() {
+func Init() {
 	db, err := gorm.Open("sqlite3", "emyt.db")
 	if err != nil {
 		log.Fatal("Failed to init db:", err)
 	}
-	Mgr = &manager{db: db}
+	UserManager = &manager{db: db}
+	err = UserManager.bootstrap()
+	if err != nil {
+		return
+	}
 }
 
-func (m *manager) AddUser(article *models.User) (err error) {
-	m.db.Create(article)
-	if errs := m.db.GetErrors(); len(errs) > 0 {
+func (mgr manager) bootstrap() (err error) {
+	user := &models.User{
+		Username: "root",
+	}
+	user.GeneratePassword()
+	var users []models.User
+	err = manager.FindAll(mgr, &users)
+	if err != nil {
+		// Handle something
+	} else {
+		if len(users) == 0 {
+			err := mgr.AddUser(user)
+			if err != nil {
+				// TODO: ADD LOG
+			}
+		} else {
+			// TODO: ADD LOG
+		}
+	}
+	return
+}
+
+func (mgr manager) FindAll(users *[]models.User) (err error) {
+	mgr.db.Find(users)
+	return
+}
+
+func (mgr manager) AddUser(user *models.User) (err error) {
+	mgr.db.Create(user)
+	if errs := mgr.db.GetErrors(); len(errs) > 0 {
 		err = errs[0]
 	}
 	return
