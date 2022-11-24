@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/emyt-io/emyt/config"
+	manager "github.com/emyt-io/emyt/manager"
 	"github.com/emyt-io/emyt/models"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
@@ -132,6 +133,9 @@ func main() {
 	//	}
 	//}()
 
+	// Start Emyt manager service
+	manager.Start()
+
 	// Start server with Graceful Shutdown WITHOUT CERT
 	go func() {
 		if err := e.Start(":9000"); err != nil && err != http.ErrServerClosed {
@@ -139,7 +143,7 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
+	// Wait for interrupt signal to gracefully shut down the server with a timeout of 10 seconds.
 	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
