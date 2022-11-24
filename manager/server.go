@@ -8,7 +8,7 @@ and encourage separation of core business logic and transport.
 
 import (
 	"fmt"
-	dbModels "github.com/emyt-io/emyt/database/models"
+	dbModels "github.com/emyt-io/emyt/dbprovider/models"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/labstack/echo"

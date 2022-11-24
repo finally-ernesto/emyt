@@ -8,9 +8,6 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.9.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
-)
-
-require (
 	github.com/BurntSushi/toml v1.0.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -20,6 +17,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-sqlite3 v1.14.0 // indirect
+	github.com/sethvargo/go-password v0.2.0 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
