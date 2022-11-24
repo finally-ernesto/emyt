@@ -20,11 +20,16 @@ type manager struct {
 }
 
 func Init() {
+	// Start Database Connection
 	db, err := gorm.Open("sqlite3", "emyt.db")
 	if err != nil {
 		log.Fatal("Failed to init db:", err)
 	}
+	// AutoMigrate Database Models
+	db.AutoMigrate(&models.User{})
+	// Create Table Managers
 	UserManager = &manager{db: db}
+	// Bootstrap root
 	err = UserManager.bootstrap()
 	if err != nil {
 		return

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/gommon/log"
 	"github.com/sethvargo/go-password/password"
@@ -10,9 +11,17 @@ type User struct {
 	gorm.Model `json:"model"`
 	Username   string `json:"username"`
 	// Password field is not exported
-	password string `json:"password"`
+	Password string `json:"password"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
+}
+
+// BeforeUpdate : hook before a user is updated
+func (u *User) BeforeUpdate(scope *gorm.Scope) (err error) {
+	fmt.Println("before update")
+	fmt.Println(u.Password)
+	u.GeneratePassword()
+	return
 }
 
 func (u *User) GeneratePassword() {
@@ -22,5 +31,5 @@ func (u *User) GeneratePassword() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	u.password = res
+	u.Password = res
 }
