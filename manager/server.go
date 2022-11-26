@@ -21,7 +21,7 @@ func handlerFunc(msg string) func(echo.Context) error {
 	}
 }
 
-func allUsers(manager dbprovider.UserManagerInterface) func(echo.Context) error {
+func GetAllUsers(manager dbprovider.UserManagerInterface) func(echo.Context) error {
 	return func(c echo.Context) error {
 		var users []dbModels.User
 		err := manager.FindAll(&users)
@@ -33,13 +33,15 @@ func allUsers(manager dbprovider.UserManagerInterface) func(echo.Context) error 
 	}
 }
 
-func handleRequest() {
-	e := echo.New()
-	manager := dbprovider.UserManager
-	e.GET("/users", allUsers(manager))
+func Start() *echo.Echo {
+	e := NewApp()
 	e.Logger.Fatal(e.Start(":9999"))
+	return e
 }
 
-func Start() {
-	handleRequest()
+func NewApp() *echo.Echo {
+	app := echo.New()
+	manager := dbprovider.UserManager
+	app.GET("/users", GetAllUsers(manager))
+	return app
 }
