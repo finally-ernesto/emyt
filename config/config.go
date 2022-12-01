@@ -4,7 +4,7 @@ type Config struct {
 	Version         string    `yaml:"version"`
 	StatusHost      string    `yaml:"status_host"`
 	ProxyListenPort string    `yaml:"proxy_listen_port"`
-	Logfile          string    `yaml:"log_file"`
+	Logfile         string    `yaml:"log_file"`
 	Services        []Service `yaml:"services"`
 }
 
