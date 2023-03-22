@@ -3,6 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"os"
+	"os/signal"
+	"time"
+
 	"github.com/emyt-io/emyt/config"
 	"github.com/emyt-io/emyt/config/models"
 	"github.com/emyt-io/emyt/dbprovider"
@@ -11,11 +17,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"net/http"
-	"net/url"
-	"os"
-	"os/signal"
-	"time"
 )
 
 const AppYamlFilename = "app.yaml"
@@ -56,6 +57,14 @@ func main() {
 				URL: urlS,
 			})
 			tenant.Use(middleware.Proxy(middleware.NewRoundRobinBalancer(targets)))
+			tenant.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+				Skipper: func(c echo.Context) bool {
+					// Skips if empty
+					return service.AllowOrigins == nil || len(service.AllowOrigins) > 0
+				},
+				AllowOrigins: service.AllowOrigins,
+				AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+			}))
 			tenant.GET("/*", func(c echo.Context) error {
 				return c.String(http.StatusOK, "Tenant:"+c.Request().Host)
 			})
